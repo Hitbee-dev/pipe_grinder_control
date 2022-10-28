@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pipe_grinder/bluetooth.dart';
 import 'home.dart';
 
 void main() {
@@ -18,10 +19,11 @@ class PipeGrinder extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
       ),
-      home: Home(),
-      initialRoute: "/home",
+      home: Bluetooth(),
+      initialRoute: "/bluetooth",
       getPages: [
         getPage("/home", Home()),
+        getPage("/bluetooth", Bluetooth()),
       ],
     );
   }
