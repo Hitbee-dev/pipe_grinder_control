@@ -108,9 +108,9 @@ class _BluetoothScan extends State<BluetoothScan> {
     return CircleAvatar(
       child: Icon(
         Icons.bluetooth,
-        color: Colors.white,
+        color: Colors.blueAccent,
       ),
-      backgroundColor: Colors.cyan,
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -137,13 +137,13 @@ class _BluetoothScan extends State<BluetoothScan> {
   Scaffold bluetoothOn() {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.black),
-        backgroundColor: Colors.transparent, //appbar 투명색
+        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: Colors.black87, //appbar 투명색
         centerTitle: true,
-        elevation: 0.0, // 그림자 농도 0
+        elevation: 2.0, // 그림자 농도 0
         title: Text(
           widget.title,
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.white),
         ),
       ),
       body: RefreshIndicator(
@@ -164,6 +164,7 @@ class _BluetoothScan extends State<BluetoothScan> {
         onPressed: scan,
         // 스캔 중이라면 stop 아이콘을, 정지상태라면 search 아이콘으로 표시
         child: Icon(_isScanning ? Icons.stop : Icons.search),
+        backgroundColor: Colors.black87,
       ),
     );
   }

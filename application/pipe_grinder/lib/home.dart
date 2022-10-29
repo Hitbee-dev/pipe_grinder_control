@@ -5,6 +5,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:pipe_grinder/bluetooth.dart';
+import 'package:step_progress_indicator/step_progress_indicator.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class _HomeState extends State<Home> {
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.black87, //appbar 투명색
         centerTitle: true,
-        elevation: 0.0, // 그림자 농도 0
+        elevation: 2.0, // 그림자 농도 0
         leading: IconButton(
           icon: Icon(Icons.bluetooth),
           onPressed: () {
@@ -31,7 +32,7 @@ class _HomeState extends State<Home> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.notes_outlined),
             onPressed: () {},
           )
         ],
@@ -157,13 +158,27 @@ class ServiceTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Menu'),
+            Text(
+              'Menu',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         children: characteristicTiles,
       );
     } else {
-      return ListTile(title: Center(child: Text('작동을 원하시면 아래 메뉴를 눌러주세요.')));
+      return ListTile(
+          title: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('작동을 원하시면 아래 '),
+          Text(
+            'Menu',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text('를 눌러주세요.'),
+        ],
+      ));
     }
   }
 }
@@ -194,6 +209,7 @@ class CharacteristicTile extends StatelessWidget {
       builder: (c, snapshot) {
         return Column(
           children: <Widget>[
+            _progressBar(context),
             _lists("EMS", "Emergency Stop", context, onWriteEMS),
             _lists("RUN", "Pipe Grinder Run", context, onWriteRun),
             _lists("Forward", "Go Forward", context, onWriteForward),
@@ -221,13 +237,40 @@ Widget _lists(name, value, context, onWritePressed) {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         IconButton(
-          icon: Icon(Icons.send,
+          icon: Icon(Icons.play_arrow_rounded,
               color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
           onPressed: onWritePressed,
         ),
       ],
     ),
     // children: descriptorTiles,
+  );
+}
+
+Widget _progressBar(BuildContext context) {
+  return Card(
+    child: Column(
+      children: [
+        Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: StepProgressIndicator(
+            totalSteps: 10,
+            currentStep: 1,
+            selectedColor: Colors.black,
+            unselectedColor: Colors.black26,
+          ),
+        ),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
+            child: Text(
+              "예상 연마 남은 시간: 03분 23초",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        )
+      ],
+    ),
   );
 }
 
