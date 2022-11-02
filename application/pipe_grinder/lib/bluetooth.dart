@@ -33,7 +33,8 @@ class _BluetoothScan extends State<BluetoothScan> {
   initState() {
     super.initState();
     if (Platform.isAndroid) {
-      _permission();
+      _checkPermissions();
+      // _permission();
     }
     initBle(); // 블루투스 초기화
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -63,6 +64,7 @@ class _BluetoothScan extends State<BluetoothScan> {
       flutterBlue.startScan(timeout: Duration(seconds: 4));
       // 스캔 결과 리스너
       flutterBlue.scanResults.listen((results) {
+        print("results: ${results}");
         scanResultList = results;
         // UI 갱신
         if (mounted) setState(() {});
@@ -210,4 +212,36 @@ void _permission() async {
   var advertise = await Permission.bluetoothAdvertise.request();
   var connect = await Permission.bluetoothConnect.request();
   if (scan.isGranted && advertise.isGranted && connect.isGranted) {}
+}
+
+Future<void> _checkPermissions() async {
+  if (Platform.isAndroid) {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.location,
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect
+    ].request();
+
+    for (var status in statuses.entries) {
+      if (status.key == Permission.location) {
+        if (status.value.isGranted) {
+          debugPrint('Location permission granted');
+        } else {
+          debugPrint("Location permission not granted");
+        }
+      } else if (status.key == Permission.bluetoothScan) {
+        if (status.value.isGranted) {
+          debugPrint('Bluetooth scan permission granted');
+        } else {
+          debugPrint('Bluetooth scan permission not granted');
+        }
+      } else if (status.key == Permission.bluetoothConnect) {
+        if (status.value.isGranted) {
+          debugPrint('Bluetooth connect permission granted');
+        } else {
+          debugPrint('Bluetooth connect permission not granted');
+        }
+      }
+    }
+  }
 }
