@@ -1,4 +1,4 @@
-package com.example.pipe_grinder
+package com.hitbee.pipe_grinder
 
 import io.flutter.embedding.android.FlutterActivity
 

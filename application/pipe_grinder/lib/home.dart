@@ -6,6 +6,17 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:pipe_grinder/bluetooth.dart';
 import 'package:step_progress_indicator/step_progress_indicator.dart';
+import 'dart:async';
+
+Timer? _timer;
+var _time = 0;
+var _curtime = 0;
+var _runningtime = 0;
+
+int runCount = 1;
+dynamic runMin = 0;
+dynamic runSec = 0;
+int runing = 0;
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -32,12 +43,17 @@ class _HomeState extends State<Home> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notes_outlined),
-            onPressed: () {},
-          )
+            onPressed: () {
+              if (_curtime < 0) {
+                _timerreset();
+              }
+              setState(() {});
+            },
+            icon: Icon(Icons.refresh),
+          ),
         ],
         title: Text(
-          "Pipe Grinder",
+          "Smart Pipe Grinder",
           style: TextStyle(color: Colors.white),
         ),
       ),
@@ -64,7 +80,16 @@ class _HomeState extends State<Home> {
                     children: <Widget>[
                       IconButton(
                         icon: Icon(Icons.settings),
-                        onPressed: () => ble.discoverServices(),
+                        onPressed: () {
+                          print("check data");
+                          print("==================");
+                          print(ble);
+                          print("==================");
+                          // 지금 블루투스 데이터를 너무 많이 가지고있나?
+                          // 구독 문제를 해결해야할 듯? 한번 해보자.
+                          // print(ble.discoverServices());
+                          ble.discoverServices();
+                        },
                       ),
                       IconButton(
                         icon: SizedBox(
@@ -114,21 +139,28 @@ List<Widget> _buildServiceTiles(List<BluetoothService> services) {
                 (c) => CharacteristicTile(
                   characteristic: c,
                   onReadPressed: () => c.read(),
-                  //48 ~ 57 -> 0 ~ 9
                   onWriteEMS: () async {
-                    await c.write([48], withoutResponse: true);
+                    await c.write([101], withoutResponse: true);
                     await c.read();
+                    _timerreset();
                   },
                   onWriteRun: () async {
-                    await c.write([49], withoutResponse: true);
+                    await c.write([runCount], withoutResponse: true);
                     await c.read();
+                    await c.write([114], withoutResponse: true);
+                    await c.read();
+                    _timerstart();
                   },
                   onWriteForward: () async {
-                    await c.write([50], withoutResponse: true);
+                    await c.write([102], withoutResponse: true);
                     await c.read();
                   },
                   onWriteBackward: () async {
-                    await c.write([51], withoutResponse: true);
+                    await c.write([98], withoutResponse: true);
+                    await c.read();
+                  },
+                  onWriteOrigin: () async {
+                    await c.write([105], withoutResponse: true);
                     await c.read();
                   },
                 ),
@@ -183,13 +215,14 @@ class ServiceTile extends StatelessWidget {
   }
 }
 
-class CharacteristicTile extends StatelessWidget {
+class CharacteristicTile extends StatefulWidget {
   final BluetoothCharacteristic characteristic;
   final VoidCallback? onReadPressed;
   final VoidCallback? onWriteEMS;
   final VoidCallback? onWriteRun;
   final VoidCallback? onWriteForward;
   final VoidCallback? onWriteBackward;
+  final VoidCallback? onWriteOrigin;
 
   const CharacteristicTile({
     Key? key,
@@ -199,26 +232,91 @@ class CharacteristicTile extends StatelessWidget {
     this.onWriteRun,
     this.onWriteForward,
     this.onWriteBackward,
+    this.onWriteOrigin,
   }) : super(key: key);
 
   @override
+  State<CharacteristicTile> createState() => _CharacteristicTileState();
+}
+
+class _CharacteristicTileState extends State<CharacteristicTile> {
+  @override
   Widget build(BuildContext context) {
+    var _controller = TextEditingController();
     return StreamBuilder<List<int>>(
-      stream: characteristic.value,
-      initialData: characteristic.lastValue,
+      stream: widget.characteristic.value,
+      initialData: widget.characteristic.lastValue,
       builder: (c, snapshot) {
         return Column(
           children: <Widget>[
             _progressBar(context),
-            _lists("EMS", "Emergency Stop", context, onWriteEMS),
-            _lists("RUN", "Pipe Grinder Run", context, onWriteRun),
-            _lists("Forward", "Go Forward", context, onWriteForward),
-            _lists("Backward", "Go Back", context, onWriteBackward)
+            Container(
+              width: MediaQuery.of(context).size.width / 2,
+              padding: EdgeInsets.only(top: 10, bottom: 10),
+              child: TextField(
+                  controller: _controller,
+                  onSubmitted: (value) {
+                    if (_controller.text != "") {
+                      runCount = int.parse(_controller.text);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_controller.text != "") {
+                            runCount = int.parse(_controller.text);
+                          }
+                          // _controller.clear();
+                        });
+                      },
+                      icon: Icon(Icons.check),
+                    ),
+                    border: OutlineInputBorder(),
+                    labelText: '연마 횟수',
+                  )),
+            ),
+            _lists("EMS", "Emergency Stop", context, widget.onWriteEMS),
+            _runlists("RUN", "Pipe Grinder Run", context, widget.onWriteRun),
+            _lists("Forward", "Go Forward", context, widget.onWriteForward),
+            // _lists("Backward", "Go Back", context, onWriteBackward),
+            _lists("Origin", "Origin Position", context, widget.onWriteOrigin)
           ],
         );
       },
     );
   }
+}
+
+Widget _runlists(name, value, context, onWritePressed) {
+  return ExpansionTile(
+    title: ListTile(
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: [
+                Text(name),
+                Text("(연마 횟수: ${runCount})"),
+              ],
+            )
+          ],
+        ),
+        subtitle: Text(value.toString()),
+        contentPadding: EdgeInsets.all(0.0)),
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        IconButton(
+          icon: Icon(Icons.play_arrow_rounded,
+              color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
+          onPressed: onWritePressed,
+        ),
+      ],
+    ),
+    // children: descriptorTiles,
+  );
 }
 
 Widget _lists(name, value, context, onWritePressed) {
@@ -255,7 +353,7 @@ Widget _progressBar(BuildContext context) {
           width: MediaQuery.of(context).size.width * 0.8,
           child: StepProgressIndicator(
             totalSteps: 10,
-            currentStep: 1,
+            currentStep: runing,
             selectedColor: Colors.black,
             unselectedColor: Colors.black26,
           ),
@@ -264,14 +362,50 @@ Widget _progressBar(BuildContext context) {
           child: Padding(
             padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
             child: Text(
-              "예상 연마 남은 시간: 03분 23초",
+              "예상 연마 남은 시간: ${runMin}분 ${runSec}초",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
+            // child: ValueListenableBuilder(
+            //     valueListenable: runSec,
+            //     builder: (BuildContext context, value, child) {
+            //       value = runSec;
+            //       return Text(
+            //         "예상 연마 남은 시간: ${runMin}분 ${runSec}초",
+            //         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            //       );
+            //     }),
           ),
-        )
+        ),
       ],
     ),
   );
+}
+
+void _timerreset() {
+  _time = 62 * runCount;
+  _curtime = 62 * runCount;
+  _runningtime = 0;
+  runing = 0;
+  _timer?.cancel();
+}
+
+void _timerstart() {
+  _time = 62 * runCount;
+  _curtime = 62 * runCount;
+  _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    print(_time);
+    print(_curtime);
+    print(_time ~/ 10);
+    print(_runningtime);
+    print(runing);
+    runMin = _curtime ~/ 60;
+    runSec = _curtime % 60;
+    if (_runningtime % (_time ~/ 10) == 0) {
+      runing++;
+    }
+    _runningtime++;
+    _curtime--;
+  });
 }
 
 void showToasts(String str) {

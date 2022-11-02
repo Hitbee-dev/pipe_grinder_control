@@ -14,7 +14,7 @@ class PipeGrinder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'PipeGrinder',
+      title: 'SmartPipeGrinder',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
