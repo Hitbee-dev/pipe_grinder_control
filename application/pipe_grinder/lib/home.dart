@@ -43,13 +43,8 @@ class _HomeState extends State<Home> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              if (_curtime < 0) {
-                _timerreset();
-              }
-              setState(() {});
-            },
-            icon: Icon(Icons.refresh),
+            onPressed: () {},
+            icon: Icon(Icons.menu),
           ),
         ],
         title: Text(
@@ -250,31 +245,47 @@ class _CharacteristicTileState extends State<CharacteristicTile> {
         return Column(
           children: <Widget>[
             _progressBar(context),
-            Container(
-              width: MediaQuery.of(context).size.width / 2,
-              padding: EdgeInsets.only(top: 10, bottom: 10),
-              child: TextField(
-                  controller: _controller,
-                  onSubmitted: (value) {
-                    if (_controller.text != "") {
-                      runCount = int.parse(_controller.text);
-                    }
-                  },
-                  decoration: InputDecoration(
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_controller.text != "") {
-                            runCount = int.parse(_controller.text);
-                          }
-                          // _controller.clear();
-                        });
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: MediaQuery.of(context).size.width / 2,
+                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                  child: TextField(
+                      controller: _controller,
+                      onSubmitted: (value) {
+                        if (_controller.text != "") {
+                          runCount = int.parse(_controller.text);
+                        }
                       },
-                      icon: Icon(Icons.check),
-                    ),
-                    border: OutlineInputBorder(),
-                    labelText: '연마 횟수',
-                  )),
+                      decoration: InputDecoration(
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              if (_controller.text != "") {
+                                runCount = int.parse(_controller.text);
+                              }
+                              // _controller.clear();
+                            });
+                          },
+                          icon: Icon(Icons.check),
+                        ),
+                        border: OutlineInputBorder(),
+                        labelText: '연마 횟수',
+                      )),
+                ),
+                Padding(padding: EdgeInsets.only(left: 30, right: 30)),
+                IconButton(
+                  onPressed: () {
+                    if (_curtime < 0) {
+                      _timerreset();
+                    }
+                    setState(() {});
+                  },
+                  icon: Icon(Icons.refresh),
+                ),
+              ],
             ),
             _lists("EMS", "Emergency Stop", context, widget.onWriteEMS),
             _runlists("RUN", "Pipe Grinder Run", context, widget.onWriteRun),
