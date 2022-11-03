@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -17,6 +19,9 @@ int runCount = 1;
 dynamic runMin = 0;
 dynamic runSec = 0;
 int runing = 0;
+
+bool androidCheck = false;
+bool androidWriteCheck = false;
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -84,6 +89,9 @@ class _HomeState extends State<Home> {
                           // 구독 문제를 해결해야할 듯? 한번 해보자.
                           // print(ble.discoverServices());
                           ble.discoverServices();
+                          if (!androidCheck && Platform.isAndroid) {
+                            androidCheck = true;
+                          }
                         },
                       ),
                       IconButton(
@@ -108,13 +116,16 @@ class _HomeState extends State<Home> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const CircularProgressIndicator();
                 }
-                // return Text(
-                //   "${snapshot.data!}",
-                //   style: const TextStyle(fontSize: 10, color: Colors.blue),
-                // );
-                return Column(
-                  children: _buildServiceTiles(snapshot.data!),
-                );
+                if (Platform.isAndroid) {
+                  var androidTile = _buildServiceTiles(snapshot.data!);
+                  if (androidCheck) {
+                    androidTile.removeRange(0, 2);
+                  }
+                  print("Tile Count: ${androidTile}");
+                  return Column(children: androidTile);
+                }
+                print("Tile Count: ${_buildServiceTiles(snapshot.data!)}");
+                return Column(children: _buildServiceTiles(snapshot.data!));
               },
             ),
           ],
@@ -136,27 +147,36 @@ List<Widget> _buildServiceTiles(List<BluetoothService> services) {
                   onReadPressed: () => c.read(),
                   onWriteEMS: () async {
                     await c.write([101], withoutResponse: true);
-                    await c.read();
+                    // await c.read();
                     _timerreset();
                   },
                   onWriteRun: () async {
-                    await c.write([runCount], withoutResponse: true);
-                    await c.read();
-                    await c.write([114], withoutResponse: true);
-                    await c.read();
-                    _timerstart();
+                    if (Platform.isAndroid) {
+                      if (!androidWriteCheck) {
+                        await c.write([runCount], withoutResponse: true);
+                        androidWriteCheck = true;
+                      } else {
+                        await c.write([114], withoutResponse: true);
+                        _timerstart();
+                        androidWriteCheck = false;
+                      }
+                    } else {
+                      await c.write([runCount], withoutResponse: true);
+                      await c.write([114], withoutResponse: true);
+                      _timerstart();
+                    }
                   },
                   onWriteForward: () async {
                     await c.write([102], withoutResponse: true);
-                    await c.read();
+                    // await c.read();
                   },
                   onWriteBackward: () async {
                     await c.write([98], withoutResponse: true);
-                    await c.read();
+                    // await c.read();
                   },
                   onWriteOrigin: () async {
                     await c.write([105], withoutResponse: true);
-                    await c.read();
+                    // await c.read();
                   },
                 ),
               )
@@ -256,7 +276,9 @@ class _CharacteristicTileState extends State<CharacteristicTile> {
                       controller: _controller,
                       onSubmitted: (value) {
                         if (_controller.text != "") {
-                          runCount = int.parse(_controller.text);
+                          setState(() {
+                            runCount = int.parse(_controller.text);
+                          });
                         }
                       },
                       decoration: InputDecoration(
