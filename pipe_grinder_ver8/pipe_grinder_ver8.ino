@@ -59,7 +59,7 @@ bool bwrunGrinder(unsigned long cur, int time){
         Serial.println("강제 중지!");
         return false;
         }
-      if (distanceS < 100){
+      if (distanceS < 155){
         Serial.println("시작 지점에 도착");
         return true;
         }
